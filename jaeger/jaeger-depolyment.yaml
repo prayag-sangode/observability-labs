@@ -50,9 +50,7 @@ spec:
         - name: jaeger-storage
           persistentVolumeClaim:
             claimName: jaeger-pvc
-
 ---
-
 apiVersion: v1
 kind: Service
 metadata:
@@ -66,14 +64,32 @@ spec:
     - name: ui
       port: 80
       targetPort: 16686
+      protocol: TCP
     - name: collector
       port: 14268
       targetPort: 14268
+      protocol: TCP
+    - name: otlp-grpc
+      port: 4317
+      targetPort: 4317
+      protocol: TCP
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: jaeger-agent
+  namespace: monitoring
+spec:
+  type: ClusterIP  # Or NodePort if needed for external agents
+  selector:
+    app: jaeger
+  ports:
     - name: agent-udp1
       port: 6831
-      protocol: UDP
       targetPort: 6831
+      protocol: UDP
     - name: agent-udp2
       port: 6832
-      protocol: UDP
       targetPort: 6832
+      protocol: UDP
+
