@@ -134,11 +134,3 @@ helm uninstall loki promtail jaeger otel-collector -n observability
 kubectl delete ns monitoring observability
 ```
 
-
-
-
-
-
-
-So you can download and deploy directly?
-```
