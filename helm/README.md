@@ -1,8 +1,3 @@
-
-
-###  `observability-values/README.md`
-
-
 #  Kubernetes Observability Stack — Helm Chart Setup
 
 This setup deploys a complete observability stack in Kubernetes using **independent Helm charts** for each component:
