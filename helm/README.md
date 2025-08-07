@@ -219,7 +219,6 @@ helm repo update
 
 ```bash
 kubectl create namespace monitoring
-kubectl create namespace observability
 
 helm upgrade --install prometheus prometheus-community/prometheus \
   -n monitoring -f observability-values/prometheus-values.yaml
@@ -231,16 +230,16 @@ helm upgrade --install node-exporter prometheus-community/prometheus-node-export
   -n monitoring -f observability-values/node-exporter-values.yaml
 
 helm upgrade --install loki grafana/loki \
-  -n observability -f observability-values/loki-values.yaml
+  -n monitoring -f observability-values/loki-values.yaml
 
 helm upgrade --install promtail grafana/promtail \
-  -n observability -f observability-values/promtail-values.yaml
+  -n monitoring -f observability-values/promtail-values.yaml
 
 helm upgrade --install jaeger jaegertracing/jaeger \
-  -n observability -f observability-values/jaeger-values.yaml
+  -n monitoring -f observability-values/jaeger-values.yaml
 
 helm upgrade --install otel-collector open-telemetry/opentelemetry-collector \
-  -n observability -f observability-values/otel-collector-values.yaml
+  -n monitoring -f observability-values/otel-collector-values.yaml
 ```
 
 ---
@@ -265,7 +264,7 @@ Default Grafana login:
 ```bash
 helm uninstall prometheus grafana node-exporter -n monitoring
 helm uninstall loki promtail jaeger otel-collector -n observability
-kubectl delete ns monitoring observability
+kubectl delete ns monitoring 
 ```
 
 ---
