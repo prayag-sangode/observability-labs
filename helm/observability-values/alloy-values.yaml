@@ -1,0 +1,33 @@
+controller:
+  type: daemonset
+
+alloy:
+  config:
+    server:
+      log_level: info
+      http_listen_port: 12345
+
+    discovery:
+      kubernetes: {}
+
+    receivers:
+      loki:
+        protocols:
+          loki:
+            listen_address: 0.0.0.0:3500
+
+    processors:
+      batch:
+        timeout: 5s
+        send_batch_size: 1024
+
+    exporters:
+      loki:
+        endpoint: http://loki.monitoring.svc.cluster.local:3100/loki/api/v1/push
+
+    service:
+      pipelines:
+        logs:
+          receivers: [loki]
+          processors: [batch]
+          exporters: [loki]

@@ -1,5 +1,35 @@
-persistence:
-  enabled: true
-  accessModes:
-    - ReadWriteOnce
-  size: 10Gi
+deploymentMode: SingleBinary
+
+isDefault: true
+
+loki:
+  auth_enabled: false
+
+  commonConfig:
+    replication_factor: 1
+
+  storage:
+    type: filesystem
+    filesystem:
+      directory: /var/loki
+
+  schemaConfig:
+    configs:
+      - from: 2023-01-01
+        store: boltdb-shipper
+        object_store: filesystem
+        schema: v11
+        index:
+          prefix: index_
+          period: 24h
+
+singleBinary:
+  replicas: 1
+
+# 🛑 Fully zero out distributed replicas (required!)
+read:
+  replicas: 0
+write:
+  replicas: 0
+backend:
+  replicas: 0
