@@ -105,8 +105,33 @@ serverFiles:
               description: |
                 Cluster CPU utilization is over 85% for more than 5 minutes.
                 Current value: {{ $value | printf "%.2f" }}%
-                
-                
+
+          - alert: HighMemoryUsage
+            expr: sum by (pod) (container_memory_working_set_bytes{namespace="default"}) > 500 * 1024 * 1024  # 500Mi threshold (adjust as needed)
+            for: 2m
+            labels:
+              severity: warning
+            annotations:
+              summary: High memory usage detected in pod {{ $labels.pod }}
+              description: |
+                Pod {{ $labels.pod }} in the 'default' namespace is using more than 500Mi of memory.
+
+          - alert: MemoryUtilizationTooHigh
+            expr: |
+              100 * (
+                sum(container_memory_working_set_bytes{namespace="default", pod!=""}) by (pod)
+                /
+                sum(kube_pod_container_resource_limits{namespace="default", resource="memory", pod!=""}) by (pod)
+              ) > 80  # utilization % threshold
+            for: 2m
+            labels:
+              severity: critical
+            annotations:
+              summary: Memory usage >80% of limit for pod {{ $labels.pod }}
+              description: |
+                Pod {{ $labels.pod }} in the 'default' namespace is consuming more than 80% of its memory limit.
+
+
 alertmanager:
   enabled: true
   persistence:
