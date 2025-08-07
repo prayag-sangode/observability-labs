@@ -221,25 +221,25 @@ helm repo update
 kubectl create namespace monitoring
 kubectl create namespace observability
 
-helm install prometheus prometheus-community/prometheus \
+helm upgrade --install prometheus prometheus-community/prometheus \
   -n monitoring -f observability-values/prometheus-values.yaml
 
-helm install grafana grafana/grafana \
+helm upgrade --install grafana/grafana \
   -n monitoring -f observability-values/grafana-values.yaml
 
-helm install node-exporter prometheus-community/prometheus-node-exporter \
+helm upgrade --install node-exporter prometheus-community/prometheus-node-exporter \
   -n monitoring -f observability-values/node-exporter-values.yaml
 
-helm install loki grafana/loki \
+helm upgrade --install loki grafana/loki \
   -n observability -f observability-values/loki-values.yaml
 
-helm install promtail grafana/promtail \
+helm upgrade --install promtail grafana/promtail \
   -n observability -f observability-values/promtail-values.yaml
 
-helm install jaeger jaegertracing/jaeger \
+helm upgrade --install jaeger jaegertracing/jaeger \
   -n observability -f observability-values/jaeger-values.yaml
 
-helm install otel-collector open-telemetry/opentelemetry-collector \
+helm upgrade --install otel-collector open-telemetry/opentelemetry-collector \
   -n observability -f observability-values/otel-collector-values.yaml
 ```
 
