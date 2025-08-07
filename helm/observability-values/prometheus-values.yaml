@@ -57,24 +57,56 @@ serverFiles:
               summary: "Pod '{{ $labels.pod }}' in namespace '{{ $labels.namespace }}' is in a non-'Running' state for more than 5 minutes."
               description: "The pod '{{ $labels.pod }}' in namespace '{{ $labels.namespace }}' has been in a non-'Running' state for more than 5 minutes."
 
-          - alert: PodHighCpuUsage
-            expr: sum(rate(container_cpu_usage_seconds_total{job="kubelet", container_name!="POD"}[1m])) by (pod) > 1
+
+          - alert: PodCPUThrottlingDetected
+            expr: sum(rate(container_cpu_cfs_throttled_seconds_total{}[5m])) by (pod) > 0
             for: 5m
             labels:
               severity: warning
             annotations:
-              summary: "High CPU usage in pod {{ $labels.pod }}"
-              description: "The pod {{ $labels.pod }} in namespace {{ $labels.namespace }} has high CPU usage."
+              summary: "CPU Throttling detected for Pod {{ $labels.pod }}"
+              description: |
+                Pod {{ $labels.pod }} is experiencing CPU throttling.
+                This means the container(s) are hitting their CPU limits, and the kernel is restricting their CPU usage (throttling occurs when a container tries to use more CPU than it is allowed).
 
-          - alert: PodHighMemoryUsage
-            expr: sum(container_memory_usage_bytes{job="kubelet", container_name!="POD"}) by (pod) / sum(machine_memory_bytes) by (node) > 0.8
+          - alert: CPUThrottlingRatioHigh
+            expr: |
+              sum(rate(container_cpu_usage_seconds_total{container!=""}[5m])) by (pod)
+              / 
+              sum(kube_pod_container_resource_requests_cpu_cores) by (pod) > 0.9
             for: 5m
             labels:
               severity: warning
             annotations:
-              summary: "High memory usage in pod {{ $labels.pod }}"
-              description: "The pod {{ $labels.pod }} in namespace {{ $labels.namespace }} has high memory usage."
+              summary: "High CPU usage to request ratio detected for pod {{ $labels.pod }}"
+              description: |
+                The CPU usage is more than 90% of the requested CPU for pod {{ $labels.pod }}.
+                This indicates that the pod may require more CPU resources than requested, potentially leading to throttling or degraded performance.
 
+
+          - alert: HighCPUUsageTopKPods
+            expr: topk(10, sum(rate(container_cpu_usage_seconds_total{container!=""}[5m])) by (pod))
+            for: 5m
+            labels:
+              severity: warning
+            annotations:
+              summary: "High CPU usage - Top 10 pods"
+              description: |
+                The following are the top 10 pods consuming the most CPU over the last 5 minutes.
+                Investigate if any pod is unexpectedly using high CPU resources.
+
+          - alert: ClusterHighCPUUtilization
+            expr: sum(rate(container_cpu_usage_seconds_total{container!=""}[5m])) / sum(machine_cpu_cores) * 100 > 85
+            for: 5m
+            labels:
+              severity: warning
+            annotations:
+              summary: "High CPU usage detected across the cluster"
+              description: |
+                Cluster CPU utilization is over 85% for more than 5 minutes.
+                Current value: {{ $value | printf "%.2f" }}%
+                
+                
 alertmanager:
   enabled: true
   persistence:
