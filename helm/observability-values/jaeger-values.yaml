@@ -1,0 +1,13 @@
+storage:
+  type: memory
+
+provisionDataStore:
+  cassandra: false
+
+query:
+  service:
+    type: NodePort
+
+collector:
+  service:
+    type: ClusterIP

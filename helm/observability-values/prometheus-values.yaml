@@ -1,0 +1,114 @@
+configmapReload:
+  prometheus:
+    enabled: true
+
+server:
+  name: server
+
+  persistentVolume:
+    enabled: true
+    statefulSetNameOverride: ""
+    accessModes:
+      - ReadWriteOnce
+    existingClaim: ""
+    mountPath: /data
+    size: 8Gi
+    storageClass: "standard"
+
+  service:
+    enabled: true
+    type: LoadBalancer
+
+serverFiles:
+  alerting_rules.yml:
+    groups:
+      - name: test
+        rules:
+          - alert: TestAlert
+            expr: vector(1)
+            for: 1m
+            labels:
+              severity: critical
+            annotations:
+              summary: "Test alert is firing."
+              description: "This is a test alert."
+
+      - name: kubernetes-pods
+        rules:
+          - alert: PodNotRunningInDefault
+            expr: kube_pod_status_phase{namespace="default", phase=~"Pending|Failed|Unknown"} > 0
+            for: 2m
+            labels:
+              severity: warning
+            annotations:
+              summary: "Pod not running in default namespace"
+              description: "One or more pods in the default namespace are not in the Running state."
+
+
+          - alert: ContainerCreatingFor5Minutes
+            expr: |
+              max by (namespace, pod) (
+                kube_pod_status_phase{phase!="Running"}
+              ) > 0
+            for: 5m
+            labels:
+              severity: critical
+            annotations:
+              summary: "Pod '{{ $labels.pod }}' in namespace '{{ $labels.namespace }}' is in a non-'Running' state for more than 5 minutes."
+              description: "The pod '{{ $labels.pod }}' in namespace '{{ $labels.namespace }}' has been in a non-'Running' state for more than 5 minutes."
+
+          - alert: PodHighCpuUsage
+            expr: sum(rate(container_cpu_usage_seconds_total{job="kubelet", container_name!="POD"}[1m])) by (pod) > 1
+            for: 5m
+            labels:
+              severity: warning
+            annotations:
+              summary: "High CPU usage in pod {{ $labels.pod }}"
+              description: "The pod {{ $labels.pod }} in namespace {{ $labels.namespace }} has high CPU usage."
+
+          - alert: PodHighMemoryUsage
+            expr: sum(container_memory_usage_bytes{job="kubelet", container_name!="POD"}) by (pod) / sum(machine_memory_bytes) by (node) > 0.8
+            for: 5m
+            labels:
+              severity: warning
+            annotations:
+              summary: "High memory usage in pod {{ $labels.pod }}"
+              description: "The pod {{ $labels.pod }} in namespace {{ $labels.namespace }} has high memory usage."
+
+alertmanager:
+  enabled: true
+  persistence:
+    size: 2Gi
+  service:
+    type: LoadBalancer  # Or NodePort if needed
+    port: 9093
+
+  config:
+    global:
+      smtp_smarthost: 'smtp.gmail.com:587'
+      smtp_from: 'prayag.rhce@gmail.com'
+      smtp_auth_username: 'prayag.rhce@gmail.com'
+      smtp_auth_password: 'asyb nguh bklh mzys'  # You can replace this with a secret if desired
+
+    route:
+      group_by: ['alertname']
+      receiver: 'email-alert'
+      group_wait: 10s
+      group_interval: 5m
+      repeat_interval: 10m
+      #repeat_interval: 3h
+
+    receivers:
+      - name: 'email-alert'
+        email_configs:
+          - to: 'prayag.rhce@gmail.com'
+            send_resolved: true
+
+kube-state-metrics:
+  enabled: true
+
+prometheus-node-exporter:
+  enabled: true
+
+prometheus-pushgateway:
+  enabled: true
